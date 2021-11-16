@@ -130,3 +130,6 @@ dmypy.json
 
 # vs code
 .vscode
+
+# max
+.DS_Store
