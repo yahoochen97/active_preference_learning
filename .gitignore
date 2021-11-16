@@ -133,3 +133,6 @@ dmypy.json
 
 # max
 .DS_Store
+
+# jupyter notebook
+*.ipynb
