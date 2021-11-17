@@ -51,14 +51,15 @@ class PreferenceKernel(Kernel):
 
 class PreferenceModel(ApproximateGP):
     def __init__(self, train_x):
+        ndim = int(train_x.shape[1]/2)
         variational_distribution = CholeskyVariationalDistribution(train_x.size(0))
         variational_strategy = VariationalStrategy(self, train_x,
                     variational_distribution, learn_inducing_locations=True)
         super(PreferenceModel, self).__init__(variational_strategy)
         self.mean_module = ZeroMean()
-        self.covar_module = PreferenceKernel(ScaleKernel(RBFKernel()))
-        # self.i_covar_module = ScaleKernel(IndicatorKernel())
-        # self.covar_module = PreferenceKernel(self.w_covar_module+self.i_covar_module)
+        self.w_covar_module = ScaleKernel(RBFKernel(active_dims=[i for i in range(1,ndim)]))
+        self.i_covar_module = ScaleKernel(IndicatorKernel(active_dims=[0]))
+        self.covar_module = PreferenceKernel(self.w_covar_module + self.i_covar_module)
 
     def forward(self, train_x):
         mean_x = self.mean_module(train_x)

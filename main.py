@@ -6,17 +6,17 @@ from utils.data import generate_data
 from utils.policy import select_next_batch
 
 
-NUM_FEATURES = 1
+NUM_FEATURES = 2
 NUM_POINTS = 100
-SEED = 1 # 5132020
+SEED = 5132020
 NUM_CODERS = 10
 USE_CODER_QUALITY = False
-BUDGET = 500
-BATCH_SIZE = 1
+BUDGET = 50
+BATCH_SIZE = 5
 
-NUM_POINTS = 100
-BUDGET = 200
-BATCH_SIZE = 100
+# NUM_POINTS = 100
+# BUDGET = 500
+# BATCH_SIZE = 20
 
 def label_pair(s1, s2, coder_quality=1):
     '''
@@ -31,22 +31,22 @@ def label_pair(s1, s2, coder_quality=1):
     return label
 
 def main():
-    xs, scores = generate_data(num_features=NUM_FEATURES, num_points=NUM_POINTS, SEED=SEED)
-    plt.scatter(xs[:,0], scores, color='black', s=4, marker='o')
-    plt.show()
+    xs, scores = generate_data(num_features=NUM_FEATURES, id_flag=True, num_points=NUM_POINTS, SEED=SEED)
+    # plt.scatter(xs[:,1], scores, color='black', s=4, marker='o')
+    # plt.show()
 
     idxs = [i for i in range(NUM_POINTS)]
     pairs = np.array(list(itertools.combinations(idxs, 2)))
 
     # data: [i, x_i, j, x_j]
-    # data = np.hstack((pairs[:,0].reshape((-1,1)), xs[pairs[:,0],1:],
-    #              pairs[:,1].reshape((-1,1)), xs[pairs[:,1],1:]))
+    data = np.hstack((pairs[:,0].reshape((-1,1)), xs[pairs[:,0],1:],
+                 pairs[:,1].reshape((-1,1)), xs[pairs[:,1],1:]))
 
-    data = np.hstack((xs[pairs[:,0]], xs[pairs[:,1]]))
+    # data = np.hstack((xs[pairs[:,0]], xs[pairs[:,1]]))
 
     # anchor data
-    # anchor_data = np.hstack((xs,-np.ones((NUM_POINTS,1)), np.zeros((NUM_POINTS,1))))
-    anchor_data = np.hstack((xs, np.zeros((NUM_POINTS,1))))
+    anchor_data = np.hstack((xs,-np.ones((NUM_POINTS,1)), -100+np.zeros((NUM_POINTS,1))))
+    # anchor_data = np.hstack((xs, np.zeros((NUM_POINTS,1))))
 
     # coder quality
     # model adversarial coders by allowing coder quality to be negative

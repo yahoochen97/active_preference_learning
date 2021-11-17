@@ -8,12 +8,12 @@ from scipy.stats import norm
 training_iterations = 100
 
 def h(t):
-    return -t*np.log(t) - (1-t)*np.log(1-t)
+    return -t*np.log2(t) - (1-t)*np.log2(1-t)
 
 def BALD(mus, s2s):
-    G2 = np.pi*np.log(2)/2
+    C = np.sqrt(np.pi*np.log(2)/2)
     phi = norm.cdf(mus/np.sqrt(s2s+1))
-    return h(phi) - np.sqrt(G2)/np.sqrt(s2s+G2)*np.exp(-mus**2/2/(s2s+G2))
+    return h(phi) - C/np.sqrt(s2s+C**2)*np.exp(-mus**2/2/(s2s+C**2))
 
 
 def select_next_batch(train_x, train_y, 
@@ -31,9 +31,9 @@ def select_next_batch(train_x, train_y,
 
      # specify hyperparameters in a cell
     hypers = {
-    'covar_module.base_kernel.base_kernel.lengthscale': torch.tensor(1.0),
-    'covar_module.base_kernel.outputscale': torch.tensor(1.0)
-    # 'i_covar_module.outputscale': torch.tensor(0.05**2),
+    'w_covar_module.base_kernel.lengthscale': torch.tensor(1.0),
+    'w_covar_module.outputscale': torch.tensor(1.0),
+    'i_covar_module.outputscale': torch.tensor(0.1**2),
     }
     model.initialize(**hypers)
 
@@ -82,6 +82,7 @@ def select_next_batch(train_x, train_y,
         # get latent score with anchor data x=(-1,0)
         observed_pred = model(anchor_data)
         zs = observed_pred.mean.numpy()
+        zs = zs - np.mean(zs)
 
         # anchor_data = torch.zeros((100,2))
         # anchor_data[:,0] = torch.linspace(-3,3,100)
@@ -90,12 +91,12 @@ def select_next_batch(train_x, train_y,
         # ss = observed_pred.mean.numpy()
         s2s = observed_pred.variance.numpy()
 
-        import matplotlib.pyplot as plt
-        XTICKS = anchor_data[:,0].numpy()
-        reindex = np.argsort(XTICKS)
-        plt.plot(XTICKS[reindex], zs[reindex])
-        plt.plot(XTICKS[reindex], zs[reindex]+2*np.sqrt(s2s[reindex]))
-        plt.plot(XTICKS[reindex], zs[reindex]-2*np.sqrt(s2s[reindex]))
-        plt.show()
+        # import matplotlib.pyplot as plt
+        # XTICKS = anchor_data[:,1].numpy()
+        # reindex = np.argsort(XTICKS)
+        # plt.plot(XTICKS[reindex], zs[reindex])
+        # plt.plot(XTICKS[reindex], zs[reindex]+2*np.sqrt(s2s[reindex]))
+        # plt.plot(XTICKS[reindex], zs[reindex]-2*np.sqrt(s2s[reindex]))
+        # plt.show()
 
     return mus, zs, np.array(query_idxs).reshape((-1,))
