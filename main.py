@@ -1,22 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
-from scipy.stats import norm, kendalltau, entropy
+import argparse
+import os
+import pandas as pd
+from scipy.stats import norm
 from utils.data import generate_data
 from utils.policy import select_next_batch
 
+# NUM_FEATURES = 2
+# NUM_POINTS = 100
+# SEED = 1 # 5132020
+# BUDGET = 100
+# BATCH_SIZE = 10
 
-NUM_FEATURES = 2
-NUM_POINTS = 100
-SEED = 5132020
 NUM_CODERS = 10
 USE_CODER_QUALITY = False
-BUDGET = 50
-BATCH_SIZE = 5
-
-# NUM_POINTS = 100
-# BUDGET = 500
-# BATCH_SIZE = 20
 
 def label_pair(s1, s2, coder_quality=1):
     '''
@@ -30,7 +29,13 @@ def label_pair(s1, s2, coder_quality=1):
     label = np.random.binomial(n=1, p=p)
     return label
 
-def main():
+def main(args):
+    NUM_FEATURES = int(args["feature"])
+    NUM_POINTS = int(args["datapoint"])
+    SEED = int(args["seed"])
+    BUDGET = int(args["budget"])
+    BATCH_SIZE = int(args["batch"])
+    POLICY = int(args["policy"])
     xs, scores = generate_data(num_features=NUM_FEATURES, id_flag=True, num_points=NUM_POINTS, SEED=SEED)
     # plt.scatter(xs[:,1], scores, color='black', s=4, marker='o')
     # plt.show()
@@ -45,7 +50,7 @@ def main():
     # data = np.hstack((xs[pairs[:,0]], xs[pairs[:,1]]))
 
     # anchor data
-    anchor_data = np.hstack((xs,-np.ones((NUM_POINTS,1)), -100+np.zeros((NUM_POINTS,1))))
+    anchor_data = np.hstack((xs,-np.ones((NUM_POINTS,1)), -100+np.zeros((NUM_POINTS,NUM_FEATURES-1))))
     # anchor_data = np.hstack((xs, np.zeros((NUM_POINTS,1))))
 
     # coder quality
@@ -68,7 +73,6 @@ def main():
     num_batch = int(BUDGET/BATCH_SIZE)
     ACC = np.zeros((num_batch,))
     RHO = np.zeros((num_batch,))
-    TAU = np.zeros((num_batch,))
 
     for k in range(num_batch):
         # query labels from coders
@@ -90,27 +94,32 @@ def main():
         # query_idxs = np.random.choice(data.shape[0], BATCH_SIZE, replace=False)
 
         mus, zs, query_idxs = select_next_batch(train_x, train_y, 
-                        data, BATCH_SIZE, query_space, anchor_data)
+                        data, BATCH_SIZE, query_space, anchor_data, POLICY)
 
         # evaluate current iteration
         ACC[k] = np.mean((mus>0) == (y_star==1))
         RHO[k] = np.corrcoef(zs, scores)[0,1]
-        TAU[k] = kendalltau(zs, scores)[0]
 
-    plt.plot(np.arange(num_batch), ACC, label="acc")
-    plt.plot(np.arange(num_batch), RHO, label="rho")
-    plt.plot(np.arange(num_batch), TAU, label="tau")
-    plt.legend()
-    plt.show()
-    
-if __name__ == "__main__":
-    main()
-    # x = np.linspace(-2,2,num=100)
-    # phi = norm.cdf(x)
-    # h1 = -phi*np.log2(phi) - (1-phi)*np.log2(1-phi)
-    # h2 = np.exp(-x**2/3.1415926/np.log(2))
-    # plt.plot(x, h1, label="truth")
-    # plt.plot(x, h2, label="approximation")
+    if not os.path.exists("./results"):
+        os.mkdir("./results")
+    result_filename = "./results/f" + str(NUM_FEATURES) + "d" + str(NUM_POINTS) \
+         + "s" + str(SEED) + "B" + str(BUDGET) + "b" + str(BATCH_SIZE) + "p" + str(POLICY) + ".csv"
+    result = pd.DataFrame({"acc": ACC, "rho": RHO})
+    result = result.round(4)
+    result.to_csv(result_filename, index=False)
+
+    # plt.plot(np.arange(num_batch), ACC, label="acc")
+    # plt.plot(np.arange(num_batch), RHO, label="rho")
     # plt.legend()
     # plt.show()
-
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='-f num_feature -d num_datapoints -s SEED -B budget -b batch_size -p policy')
+    parser.add_argument('-f','--feature', help='number of features', required=True)
+    parser.add_argument('-d','--datapoint', help='number of data', required=True)
+    parser.add_argument('-s','--seed', help='random seed', required=True)
+    parser.add_argument('-B','--budget', help='total budget', required=True)
+    parser.add_argument('-b','--batch', help='batch size', required=True)
+    parser.add_argument('-p','--policy', help='policy: 0 random 1 bald', required=True)
+    args = vars(parser.parse_args())
+    main(args)

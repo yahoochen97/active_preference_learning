@@ -1,0 +1,20 @@
+#!/bin/bash
+#BSUB -n 1
+#BSUB -R "span[hosts=1]"
+
+mkdir -p /export/cluster-tmp/chenyehu
+export TMPDIR=/export/cluster-tmp/chenyehu
+
+module add seas-anaconda3
+conda activate chenyehu
+
+NUM_FEATURES=$1
+NUM_POINTS=$2
+SEED=$3
+BUDGET=$4
+BATCH_SIZE=$5
+POLICY=$6
+
+python main.py -f $NUM_FEATURES -d $NUM_POINTS -s $SEED -B $BUDGET -b $BATCH_SIZE -p $POLICY
+
+conda deactivate

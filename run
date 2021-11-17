@@ -1,0 +1,36 @@
+mkdir -p results
+
+MAXSEED=1
+POLICY=1
+declare -a NUM_FEATURES=(2)
+declare -a NUM_POINTS=(100)
+declare -a BUDGET=(100)
+declare -a BATCH_SIZE=(100)
+               
+if [ $1 = "run" ]
+then
+    for s in $(seq 1 1 $MAXSEED); do
+        for p in $(seq 0 1 $POLICY); do
+            for f in ${NUM_FEATURES[@]}; do
+                for d in ${NUM_POINTS[@]}; do
+                    for B in ${BUDGET[@]}; do
+                        for b in ${BATCH_SIZE[@]}; do
+                            bsub -G SEAS-Lab-Garnett -J "f${f}d${d}s${s}B${B}b${b}p${p}" "./onerun $f $d $s $B $b $p"
+                        done
+                    done
+                done
+            done
+        done
+    done
+elif [ $1 = "visualize" ]
+then
+    for f in ${NUM_FEATURES[@]}; do
+        for d in ${NUM_POINTS[@]}; do
+            for B in ${BUDGET[@]}; do
+                for b in ${BATCH_SIZE[@]}; do
+                    python visualize.py -f $f -d $d -s $MAXSEED -B $B -b $b -p $POLICY
+                done
+            done
+        done
+    done
+fi
