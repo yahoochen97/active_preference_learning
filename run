@@ -1,6 +1,6 @@
 mkdir -p results
 
-MAXSEED=25
+MAXSEED=1
 POLICY=1
 declare -a NUM_FEATURES=(2)
 declare -a NUM_POINTS=(1000)
