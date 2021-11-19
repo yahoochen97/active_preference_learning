@@ -15,9 +15,10 @@ then
                 for d in ${NUM_POINTS[@]}; do
                     for B in ${BUDGET[@]}; do
                         for b in ${BATCH_SIZE[@]}; do
-                            bsub -G SEAS-Lab-Garnett -J "f${f}d${d}s${s}B${B}b${b}p${p}" "./onerun $f $d $s $B $b $p"
+                            bsub -G SEAS-Lab-Garnett -o "f${f}d${d}s${s}B${B}b${b}p${p}.log" -J "f${f}d${d}s${s}B${B}b${b}p${p}" "./onerun $f $d $s $B $b $p"
                         done
                     done
+                    .
                 done
             done
         done

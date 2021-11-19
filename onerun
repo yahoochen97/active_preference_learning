@@ -5,8 +5,8 @@
 mkdir -p /export/cluster-tmp/chenyehu
 export TMPDIR=/export/cluster-tmp/chenyehu
 
-module add seas-anaconda3
-conda activate chenyehu
+# module add seas-anaconda3
+# conda activate chenyehu
 
 NUM_FEATURES=$1
 NUM_POINTS=$2
@@ -17,4 +17,4 @@ POLICY=$6
 
 python main.py -f $NUM_FEATURES -d $NUM_POINTS -s $SEED -B $BUDGET -b $BATCH_SIZE -p $POLICY
 
-conda deactivate
+# conda deactivate
