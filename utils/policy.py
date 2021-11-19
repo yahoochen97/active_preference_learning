@@ -15,9 +15,8 @@ def BALD(mus, s2s):
     phi = norm.cdf(mus/np.sqrt(s2s+1))
     return h(phi) - C/np.sqrt(s2s+C**2)*np.exp(-mus**2/2/(s2s+C**2))
 
-
 def select_next_batch(train_x, train_y, 
-            data, BATCH_SIZE,  query_space, anchor_data):
+            data, BATCH_SIZE,  query_space, anchor_data, POLICY):
     '''
     Select query idx for next batch from data.
     '''
@@ -65,16 +64,26 @@ def select_next_batch(train_x, train_y,
     likelihood.eval()
 
     with torch.no_grad():
-        # Test x are all pairs in remaining data
-        observed_pred = model(test_x)
-        mus = observed_pred.mean.numpy()
-        s2s = observed_pred.variance.numpy()
+        # Test x are all pairs in data
+        # need to run in parallel due to O(num_points**2) pairs
+        mus = np.zeros((test_x.shape[0],))
+        s2s = np.zeros((test_x.shape[0],))
+        K = int(test_x.shape[0]/1000)
+        for i in range(K):
+            observed_pred = model(test_x[1000*i:1000*(i+1)])
+            mus[1000*i:1000*(i+1)] = observed_pred.mean.numpy()
+            s2s[1000*i:1000*(i+1)] = observed_pred.variance.numpy()
+        observed_pred = model(test_x[1000*K:])
+        mus[1000*K:] = observed_pred.mean.numpy()
+        s2s[1000*K:] = observed_pred.variance.numpy()
         BALD_scores = BALD(mus, s2s)
         query_idxs = []
         i = 1
         sorted_idx = np.argsort(BALD_scores)
         while len(query_idxs)<BATCH_SIZE:
             idx = sorted_idx[-i]
+            if POLICY==0:
+                idx = np.random.choice(sorted_idx, 1)
             if query_space[idx]:
                 query_idxs.append(idx)
             i = i + 1
@@ -83,12 +92,6 @@ def select_next_batch(train_x, train_y,
         observed_pred = model(anchor_data)
         zs = observed_pred.mean.numpy()
         zs = zs - np.mean(zs)
-
-        # anchor_data = torch.zeros((100,2))
-        # anchor_data[:,0] = torch.linspace(-3,3,100)
-        # anchor_data[:,1] = torch.arange(-2000, -1000, 10)
-        # observed_pred = model(anchor_data)
-        # ss = observed_pred.mean.numpy()
         s2s = observed_pred.variance.numpy()
 
         # import matplotlib.pyplot as plt

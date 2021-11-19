@@ -55,7 +55,7 @@ def generate_data(num_points=1000, id_flag=False, num_features=1, SEED=1):
     'likelihood.noise_covar.noise': torch.tensor(0.1**2),
     'w_covar_module.base_kernel.lengthscale': torch.tensor(1.0),
     'w_covar_module.outputscale': torch.tensor(1.0),
-    'i_covar_module.outputscale': torch.tensor(0.01**2),
+    'i_covar_module.outputscale': torch.tensor(0.5**2),
     }
 
     model.initialize(**hypers)
