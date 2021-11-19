@@ -1,10 +1,10 @@
 mkdir -p results
 
-MAXSEED=1
+MAXSEED=25
 POLICY=1
 declare -a NUM_FEATURES=(2)
-declare -a NUM_POINTS=(100)
-declare -a BUDGET=(100)
+declare -a NUM_POINTS=(1000)
+declare -a BUDGET=(4000)
 declare -a BATCH_SIZE=(100)
                
 if [ $1 = "run" ]
